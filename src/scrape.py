@@ -11,8 +11,8 @@ import multiprocessing as mp
 from functools import partial
 from contextlib import contextmanager
 
-# sleep (not needed anymore?)
-from time import sleep
+# Output handeling file
+import writer as out
 
 glob_url = 'https://imdb.com/'
 
@@ -46,7 +46,7 @@ def manip_movie(url, actor):
     # If the movie meets those requirements, return the actress's name,
     #   and age when the movie was made (year - year)
     # If the movie does not meet those requirements, return none
-    html = simple_get(url)
+    html = simple_get(url[0])
     soup = BeautifulSoup(html, 'html.parser')
 
     # 1:
@@ -56,28 +56,46 @@ def manip_movie(url, actor):
     leads = movie_page.findAll('a')
 
     # TODO: Refactor this part to be more dynamic
+    # This checks to see if the actor is even in the top 3 on imdb
     if (leads[0].text != actor and
        leads[1].text != actor and
        leads[2].text != actor):
-        return None
+        return (None, url[1])
 
-    lead_list.append({'lead':leads[0].text or False, 'lead_url':leads[0]['href'][1:16], 'gender':''})
-    lead_list.append({'lead':leads[1].text or False, 'lead_url':leads[1]['href'][1:16], 'gender':''})
-    lead_list.append({'lead':leads[2].text or False, 'lead_url':leads[2]['href'][1:16], 'gender':''})
+    lead_list.append({'lead':leads[0].text, 'lead_url':leads[0]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
+    lead_list.append({'lead':leads[1].text, 'lead_url':leads[1]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
+    lead_list.append({'lead':leads[2].text, 'lead_url':leads[2]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
     #print(lead_list)
 
     # 2: The actor needs a female counterpart
+    movie_release_year = int(soup.find('span', {'id' : 'titleYear'}).text[1:5])
     for l in lead_list:
         # Check if any of the leads are female. Otherwise, return None
         act_html = simple_get(glob_url + l['lead_url'])
         act_soup = BeautifulSoup(act_html, 'html.parser')
         act_gender = act_soup.find('a', {'href':'#actor'})
 
-        # Skip dudes
+                # Skip dudes
         if act_gender is not None:
             l['gender'] = 'm'
         else:
             l['gender'] = 'f'
+
+
+
+        # get the actor's age during the filiming
+
+        actor_birth_year = act_soup.find('time')
+        try:
+            actor_age_at_release = movie_release_year - int(actor_birth_year.findChildren()[1].text.strip())
+        except AttributeError:
+            print("==> Attribute Error with information from url : '" + str(url[1]) + "' with actor " + l['lead'])
+            print("==> This actor has been thrown out of the dataset")
+            # Do not add this actors age to the list, becuase IMDB does not have their age listed.
+
+        l['age_at_release'] = actor_age_at_release
+
+
 
     count = 0
     for l in lead_list: # If there are the male leads, there are no female leads.
@@ -85,13 +103,13 @@ def manip_movie(url, actor):
             count += 1
 
     if count is 3:
-        return None
+        return (None, url[1])
 
     # Trim the list (again) to remove any other male stars:
     for x in range(len(lead_list)):
         if lead_list[x]['gender'] == 'm' and lead_list[x]['lead'] != actor:
             #del lead_list[x]
-            lead_list[x] = None # Have to do it this way because python lists are dumb
+            lead_list[x] = None
 
 
     # 3: The movie needs to be considered a 'hit'
@@ -109,16 +127,23 @@ def scrape_movies(movies, actor_name):
     # We need to rate limit ourselves doing this
     # This also give us time to parse through the html in a different thread?
     # Get the list of movie urls
-    url_list = [glob_url + m['URL'] for m in movies]
+    url_list = [(glob_url + m['URL'], m['Name']) for m in movies]
     final_list = []
 
     # Create a pool of workers and assign them each a url.
     print("Starting worker pool (10 workers)")
     with pool_context(processes=10) as pool:
         final_list = pool.map(partial(manip_movie, actor=actor_name), url_list)
-    print(final_list)
+    #print(final_list)
     print("Done working")
 
+    # gonna try flattening that list, see what happens.
+    final_list = filter(None, [i for sublist in filter(None, final_list) for i in sublist])
+    #print(final_list2)
+    for elm in final_list:
+        print(elm)
+
+    out.write(final_list, actor_name)
     """
     for u in url_list:
         final_list.append(manip_movie(u, actor_name))
