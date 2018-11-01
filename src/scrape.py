@@ -52,24 +52,32 @@ def manip_movie(url, actor):
     # 1:
     lead_list = []
     lead_age = 0
-    movie_page = soup.findAll('div', {'class' : 'credit_summary_item'})[2]
-    leads = movie_page.findAll('a')
+    try: # We may need to attack this differently, as we currently are not receiving some of the actors
+        movie_page = soup.findAll('div', {'class' : 'credit_summary_item'})[2]
+        leads = movie_page.findAll('a')
+    except IndexError:
+        # This will indexError when a movie does not have any writers or directors listed.
+        # Nothing I can really do about it tbh
+        print("==> Movie '" + url[1] + "' had caused an InndexError")
+        print("==> This movie has been thrown out of the dataset")
+        return (None, url[1])
 
     # TODO: Refactor this part to be more dynamic
     # This checks to see if the actor is even in the top 3 on imdb
-    if (leads[0].text != actor and
-       leads[1].text != actor and
-       leads[2].text != actor):
-        return (None, url[1])
+    actor_is_lead = False
+    for x in range(len(leads) - 1):
+        if leads[x].text == actor:
+            actor_is_lead = True
 
-    lead_list.append({'lead':leads[0].text, 'lead_url':leads[0]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
-    lead_list.append({'lead':leads[1].text, 'lead_url':leads[1]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
-    lead_list.append({'lead':leads[2].text, 'lead_url':leads[2]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None})
-    #print(lead_list)
+        lead_list.append({'lead':leads[x].text, 'lead_url':leads[x]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None, 'movie_year_released':-1})
+
+    if actor_is_lead == False:
+        return (None, url[1])
 
     # 2: The actor needs a female counterpart
     movie_release_year = int(soup.find('span', {'id' : 'titleYear'}).text[1:5])
     for l in lead_list:
+        l['movie_year_released'] = movie_release_year
         # Check if any of the leads are female. Otherwise, return None
         act_html = simple_get(glob_url + l['lead_url'])
         act_soup = BeautifulSoup(act_html, 'html.parser')
@@ -81,19 +89,20 @@ def manip_movie(url, actor):
         else:
             l['gender'] = 'f'
 
-
-
         # get the actor's age during the filiming
 
         actor_birth_year = act_soup.find('time')
         try:
             actor_age_at_release = movie_release_year - int(actor_birth_year.findChildren()[1].text.strip())
+            l['age_at_release'] = actor_age_at_release
         except AttributeError:
-            print("==> Attribute Error with information from url : '" + str(url[1]) + "' with actor " + l['lead'])
+            print("==> Attribute Error with information from the movie: '" + str(url[1]) + "' with actor " + l['lead'])
             print("==> This actor has been thrown out of the dataset")
             # Do not add this actors age to the list, becuase IMDB does not have their age listed.
+        except IndexError:
+            print("==> Index Error with information from the actor '" + l['lead'] + "' from the movie " + str(url[1]))
+            print("==> This actor has been thrown out of the dataset")
 
-        l['age_at_release'] = actor_age_at_release
 
 
 
@@ -103,7 +112,7 @@ def manip_movie(url, actor):
             count += 1
 
     if count is 3:
-        return (None, url[1])
+       return (None, url[1])
 
     # Trim the list (again) to remove any other male stars:
     for x in range(len(lead_list)):
@@ -139,9 +148,9 @@ def scrape_movies(movies, actor_name):
 
     # gonna try flattening that list, see what happens.
     final_list = filter(None, [i for sublist in filter(None, final_list) for i in sublist])
-    #print(final_list2)
-    for elm in final_list:
-        print(elm)
+    #print(final_list)
+    #for elm in final_list:
+        #print(elm)
 
     out.write(final_list, actor_name)
     """

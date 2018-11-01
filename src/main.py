@@ -53,7 +53,7 @@ def trim_movie_list(movies):
     return trimmed_movies
 
 if __name__ == '__main__':
-    raw_html = sc.simple_get(glob_url + 'name/nm0000129/')
+    raw_html = sc.simple_get(glob_url + 'name/nm0000123/')
     actor_name = get_actor_name(raw_html)
     final = trim_movie_list(related_movies(raw_html))
 
