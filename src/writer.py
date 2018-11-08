@@ -22,5 +22,5 @@ def write(actors, actor_name):
     print(good_data)
     print("Bad data: ")
     print(thrown_data)
-    raise SyntaxError("The write module is not defined yet")
+    #raise SyntaxError("The write module is not defined yet")
 

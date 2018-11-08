@@ -1,5 +1,6 @@
 from datetime import datetime
 import scrape as sc
+import re
 
 glob_url = 'https://imdb.com/'
 
@@ -8,8 +9,9 @@ def related_movies(raw_html):
     # Take the normal html and load it into BS4
     html = sc.BeautifulSoup(raw_html, 'html.parser')
 
-    # Get the even and odd rows because IMDB makes it that way
-    movie_soup = html.find('div', {'class': 'filmo-category-section'}).findAll('div', recursive=False)
+    # Find all the div's with an id with the pattern 'actor-tt******' where the *'s are random numbers that we dont care about
+    movie_soup = html.findAll('div', {'id': re.compile('actor-tt.')})
+    #movie_soup = html.find('div', {'class': 'filmo-category-section'}).findAll('div', recursive=False)
 
     # Pre defined dictionarys
     movie_list = []
@@ -53,13 +55,28 @@ def trim_movie_list(movies):
     return trimmed_movies
 
 if __name__ == '__main__':
-    raw_html = sc.simple_get(glob_url + 'name/nm0000123/')
-    actor_name = get_actor_name(raw_html)
-    final = trim_movie_list(related_movies(raw_html))
+
+    act = [#'/name/nm0000553/', # Liam Nissan
+           #'/name/nm0000129/', # Tom Cruise
+           #'/name/nm0000123/', # George Clooney
+           #'/name/nm0000125/', # Sean Connery
+           #'/name/nm0000354/', # Matt Damon
+           #'/name/nm0000148/', # Harrison Ford
+           '/name/nm0000243/'] # Denzel Washington
+
+    for a in act:
+        raw_html = sc.simple_get(glob_url + a)
+        actor_name = get_actor_name(raw_html)
+        final = trim_movie_list(related_movies(raw_html))
+
+        print(str(len(final)) + ' items')
+
+        print("Working on actor: " + actor_name)
+        sc.scrape_movies(final, actor_name)
 
     #for e in final:
         #print('{0:60} | {1:20} | {2}'.format(e['Name'], e['URL'], e['Year']))
-    print(str(len(final)) + ' items')
+    #print(str(len(final)) + ' items')
 
     # Time to scrape!
-    sc.scrape_movies(final, actor_name)
+    #sc.scrape_movies(final, actor_name)
