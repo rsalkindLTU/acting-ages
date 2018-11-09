@@ -41,8 +41,8 @@ def movie_group(actors, actor_name, f):
         else:
             pass
 
-    writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Age:'], 2)
-    writeFormatted(f, [dude['movie'], dude['actor'], '', str(dude['age'])], 2)
+    writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Age:', 'Year:'], 2)
+    writeFormatted(f, [dude['movie'], dude['actor'], '', str(dude['age']), str(dude['year'])], 2)
 
 
     for a in actors:
@@ -98,6 +98,7 @@ def write(actors, actor_name):
                 #print("current g actor: " + g['actor'])
                 current_movie = g['movie']
                 movie_group(single_movie_data, actor_name, f)
+                writeFormatted(f, [])
                 single_movie_data = []
                 single_movie_data.append(g)
             else:
