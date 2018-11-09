@@ -62,7 +62,8 @@ def manip_movie(url, actor):
 
     actor_is_lead = False
     #for x in range(len(leads)):
-    for x in range(5):
+    acts_to_grab = 10
+    for x in range(acts_to_grab):
         #print(leads[x].td.a.img['alt'])
         try:
             if leads[x].td.a.img['alt'] == actor:
@@ -72,6 +73,8 @@ def manip_movie(url, actor):
             print("Movie: " + url[1])
             # Ignore and keep going
             continue
+        except AttributeError:
+            continue
 
         #lead_list.append({'lead':leads[x].text, 'lead_url':leads[x]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None, 'movie_year_released':-1})
         lead_list.append({'lead':leads[x].td.a.img['alt'],
@@ -80,8 +83,8 @@ def manip_movie(url, actor):
                           'movie':url[1],
                           'age_at_release':None,
                           'movie_year_released':-1,
-                          'gpr_hit':None,
-                          'net_hit':None})
+                          'gpr_hit':False,
+                          'net_hit':False})
 
 
     if actor_is_lead == False: # If the actor we are looking at is not top billed
@@ -209,24 +212,27 @@ def greatist_hits(leads, soup):
         gross = int(gross_str.replace(',','').replace('$',''))
         budget = int(budget_str.replace(',','').replace('$',''))
     except AttributeError:
-        print("Movie '" + movie_title + "' has either no gross or budget")
+        print("====> Movie '" + movie_title + "' has either no gross or budget")
         return leads
 
     # Cacculate Gross Profit margin (gross - budget)/gross
     gpr = (gross - budget)/gross
-    print("GPR for " + movie_title + " is " + str(gpr))
+    #print("GPR for " + movie_title + " is " + str(gpr))
 
     # Net Profit
     net_profit = gross - budget
-    print("NET PROFIT for " + movie_title + " is " +str(net_profit))
+    #print("NET PROFIT for " + movie_title + " is " +str(net_profit))
 
     # Determing if either of those are above the threshhold for being considered a 'hit'
     # We can either return the entire gpr and net values or we can return true/false if they pass a threshold.
     for l in leads:
-        if gpr > .50:
-            l['grp_hit'] = True
-        if net_profit > (budget / 2):
-            l['net_hit'] = True
+        try:
+            if gpr > .50:
+                l['grp_hit'] = True
+            if net_profit > (budget / 2):
+                l['net_hit'] = True
+        except TypeError:
+            pass
 
     return leads
 
