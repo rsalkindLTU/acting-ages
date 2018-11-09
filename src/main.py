@@ -56,13 +56,22 @@ def trim_movie_list(movies):
 
 if __name__ == '__main__':
 
-    act = ['/name/nm0000553/'] # Liam Nissan
+    act = [#'/name/nm0000553/', # Liam Nissan
            #'/name/nm0000129/', # Tom Cruise
            #'/name/nm0000123/', # George Clooney
            #'/name/nm0000125/', # Sean Connery
            #'/name/nm0000354/', # Matt Damon
            #'/name/nm0000148/', # Harrison Ford
-           #'/name/nm0000243/'] # Denzel Washington
+           #'/name/nm0000243/', # Denzel Washington
+           #'/name/nm0185819/', # Daniel Craig
+           #'/name/nm0000147/', # Colin Firth
+           #'/name/nm0000375/', # Robert Downey Jr.
+           #'/name/nm0000102/', # Kevin Bacon
+           #'/name/nm0000136/', # Johnny Depp
+           #'/name/nm0000152/', # Richard Gere
+           '/name/nm0001557/', # Viggo Mortesen
+           '/name/nm0000093/', # Brad Pitt
+           '/name/nm0000115/'] # Nicolas Cage
 
     for a in act:
         raw_html = sc.simple_get(glob_url + a)
