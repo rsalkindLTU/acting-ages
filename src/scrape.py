@@ -53,9 +53,6 @@ def manip_movie(url, actor):
     # 1:
     lead_list = []
     lead_age = 0
-    # We may need to attack this differently, as we currently are not receiving some of the actors
-        #movie_page = soup.findAll('div', {'class' : 'credit_summary_item'})[2]
-        #leads = movie_page.findAll('a')
     movie_page = soup.find('table', {'class': 'cast_list'})
     leads = movie_page.findAll('tr', {'class': re.compile('odd|even')})
     # This checks to see if the actor is even in the actor list
@@ -76,7 +73,6 @@ def manip_movie(url, actor):
         except AttributeError:
             continue
 
-        #lead_list.append({'lead':leads[x].text, 'lead_url':leads[x]['href'][1:16], 'gender':'', 'movie':url[1], 'age_at_release':None, 'movie_year_released':-1})
         lead_list.append({'lead':leads[x].td.a.img['alt'],
                           'lead_url':leads[x].td.a['href'][1:16],
                           'gender':'',
@@ -130,7 +126,6 @@ def manip_movie(url, actor):
 
 
 
-    # TODO: Make this part more dynamic aswell
     # Trim the list (again) to remove any other male stars:
     for x in range(len(lead_list)):
         if lead_list[x]['gender'] == 'm' and lead_list[x]['lead'] != actor:
@@ -151,8 +146,6 @@ def manip_movie(url, actor):
     # 3: The movie needs to be considered a 'hit'
     # This one is more complex. We can do it based off of net gross or IMDB/Metacritic ratings, both work.
     lead_list = greatist_hits(lead_list, soup)
-
-    #raise SyntaxError("git fuk'd nerd")
 
     return lead_list
 
@@ -208,7 +201,7 @@ def greatist_hits(leads, soup):
         movie_rev_soup = movie_rev_soup.findNext('div')
 
 
-    try:
+    try: # TODO: make this not so much garbage (probably a regex replace or something)
         gross = int(gross_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
         budget = int(budget_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
         print("Gross: " + str(gross) + ", Budget: " + str(budget) + ", for movie " + movie_title)
