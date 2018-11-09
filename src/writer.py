@@ -81,27 +81,33 @@ def write(actors, actor_name):
     with open(oos.path.join(save_path, act_file_nm), "a") as f:
 
         # Loop over bad data first
-        writeFormatted(f, ['\n', '\n', '\n', 'Bad Data', actor_name])
-        writeFormatted(f, ['Movie','Throw Reason'], 2)
-        for t in thrown_data:
-            writeFormatted(f, [t[0], t[1]], 2)
+        if len(thrown_data) is 0:
+            writeFormatted(f, ['\n', '\n', '\n', 'No Bad Data', actor_name])
+        else:
+            writeFormatted(f, ['\n', '\n', '\n', 'Bad Data', actor_name])
+            writeFormatted(f, ['Movie','Throw Reason'], 2)
+            for t in thrown_data:
+                writeFormatted(f, [t[0], t[1]], 2)
 
         # Now for the good data!
-        writeFormatted(f, ['\n', '\n', '\n', 'Good Data', actor_name])
-        writeFormatted(f, ['Movie'], 2)
-        single_movie_data = []
-        current_movie = good_data[0]['movie']
-        for g in good_data:
-            #writeFormatted(f, ['Nothing', 'Yet'], 2)
-            if g['movie'] != current_movie:
-                #print("old m: " + current_movie + ", new m: " + g['movie'])
-                #print("current g actor: " + g['actor'])
-                current_movie = g['movie']
-                movie_group(single_movie_data, actor_name, f)
-                writeFormatted(f, [])
-                single_movie_data = []
-                single_movie_data.append(g)
-            else:
-                single_movie_data.append(g)
-                #print(g)
+        if len(good_data) is 0:
+            writeFormatted(f, ['\n', '\n', '\n', 'No Good Data', actor_name])
+        else:
+            writeFormatted(f, ['\n', '\n', '\n', 'Good Data', actor_name])
+            writeFormatted(f, ['Movie'], 2)
+            single_movie_data = []
+            current_movie = good_data[0]['movie']
+            for g in good_data:
+                #writeFormatted(f, ['Nothing', 'Yet'], 2)
+                if g['movie'] != current_movie:
+                    #print("old m: " + current_movie + ", new m: " + g['movie'])
+                    #print("current g actor: " + g['actor'])
+                    current_movie = g['movie']
+                    movie_group(single_movie_data, actor_name, f)
+                    writeFormatted(f, [])
+                    single_movie_data = []
+                    single_movie_data.append(g)
+                else:
+                    single_movie_data.append(g)
+                    #print(g)
 
