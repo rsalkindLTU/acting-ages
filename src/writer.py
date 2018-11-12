@@ -29,6 +29,11 @@ def writeFormatted(f_stream, args, collumn_offset = 0):
 
     f_stream.write('\n')
 
+def write_break(f_stream, count):
+    # Automated way of adding newlines without wasting commas.
+    for x in range(count):
+        writeFormatted(f_stream, [])
+
 def movie_group(actors, actor_name, f):
     # This function will take the list of actresses in one movie and
     # order them with the actor at the top, followed by their respective
@@ -77,23 +82,25 @@ def write(actors, actor_name):
     print(thrown_data)
 
     # Start writing!
-    act_file_nm = actor_name + ".csv"
+    act_file_nm = actor_name +  "_results.csv"
     with open(oos.path.join(save_path, act_file_nm), "a") as f:
 
         # Loop over bad data first
         if len(thrown_data) is 0:
-            writeFormatted(f, ['\n', '\n', '\n', 'No Bad Data', actor_name])
+            writeFormatted(f, ['No Bad Data', actor_name])
         else:
-            writeFormatted(f, ['\n', '\n', '\n', 'Bad Data', actor_name])
+            writeFormatted(f, ['Bad Data', actor_name])
             writeFormatted(f, ['Movie','Throw Reason'], 2)
             for t in thrown_data:
                 writeFormatted(f, [t[0], t[1]], 2)
 
         # Now for the good data!
         if len(good_data) is 0:
-            writeFormatted(f, ['\n', '\n', '\n', 'No Good Data', actor_name])
+            write_break(f, 3)
+            writeFormatted(f, ['No Good Data', actor_name])
         else:
-            writeFormatted(f, ['\n', '\n', '\n', 'Good Data', actor_name])
+            write_break(f, 3)
+            writeFormatted(f, ['Good Data', actor_name])
             writeFormatted(f, ['Movie'], 2)
             single_movie_data = []
             current_movie = good_data[0]['movie']
@@ -104,7 +111,8 @@ def write(actors, actor_name):
                     #print("current g actor: " + g['actor'])
                     current_movie = g['movie']
                     movie_group(single_movie_data, actor_name, f)
-                    writeFormatted(f, [])
+                    write_break(f, 1)
+                    #writeFormatted(f, [])
                     single_movie_data = []
                     single_movie_data.append(g)
                 else:
