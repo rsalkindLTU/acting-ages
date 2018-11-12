@@ -202,10 +202,15 @@ def greatist_hits(leads, soup):
 
 
     try: # TODO: make this not so much garbage (probably a regex replace or something)
-        gross = int(gross_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
-        budget = int(budget_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
-        print("Gross: " + str(gross) + ", Budget: " + str(budget) + ", for movie " + movie_title)
+        #gross = int(gross_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
+        #budget = int(budget_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
+        gross = int(re.sub(r'[^0-9]+', '', gross_str))
+        budget = int(re.sub(r'[^0-9]+', '', budget_str))
+        #print("Gross: " + str(gross) + ", Budget: " + str(budget) + ", for movie " + movie_title)
     except AttributeError:
+        print("====> Movie '" + movie_title + "' has either no gross or budget")
+        return leads
+    except TypeError:
         print("====> Movie '" + movie_title + "' has either no gross or budget")
         return leads
 
@@ -223,8 +228,8 @@ def greatist_hits(leads, soup):
         try:
             if gpr > .50:
                 l['grp_hit'] = True
-            #if net_profit > (budget / 2):
-            if net_profit > 10000000:
+            if net_profit > (budget / 2):
+            #if net_profit > 10000000:
                 l['net_hit'] = True
         except TypeError:
             pass
