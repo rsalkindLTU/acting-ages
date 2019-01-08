@@ -204,8 +204,10 @@ def greatist_hits(leads, soup):
     try: # TODO: make this not so much garbage (probably a regex replace or something)
         #gross = int(gross_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
         #budget = int(budget_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
-        gross = int(re.sub(r'[^0-9]+', '', gross_str))
-        budget = int(re.sub(r'[^0-9]+', '', budget_str))
+        #gross = int(re.sub(r'[^0-9]+', '', gross_str))
+        #budget = int(re.sub(r'[^0-9]+', '', budget_str))
+        gross = float(re.sub(r'[^A-Za-z0-9_\.]', '', gross_str)) # Redone, as the previous regex was removing decimal places.
+        budget = float(re.sub(r'[^A-Za-z0-9_\.]', '', budget_str))
         #print("Gross: " + str(gross) + ", Budget: " + str(budget) + ", for movie " + movie_title)
     except AttributeError:
         print("====> Movie '" + movie_title + "' has either no gross or budget")
