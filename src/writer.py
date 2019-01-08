@@ -19,9 +19,9 @@ def path_init():
         pass
 
 def writeFormatted(f_stream, args, collumn_offset = 0):
-    for x in range(collumn_offset):
+    for x in range(collumn_offset): # Write the number of commas for the collum offset
         f_stream.write(',')
-    for a in args:
+    for a in args: # Write the data to the csv
         if ',' in a:
             f_stream.write('"' + a  + '",')
         else:
@@ -46,15 +46,15 @@ def movie_group(actors, actor_name, f):
         else:
             pass
 
-    writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Age:', 'Year:'], 2)
-    writeFormatted(f, [dude['movie'], dude['actor'], '', str(dude['age']), str(dude['year'])], 2)
+    #writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Actor Age:', 'Actress Age:', 'Year:'], 2)
+    writeFormatted(f, [dude['movie'], dude['actor'], '', str(dude['year']), str(dude['age']), ''], 2)
 
 
     for a in actors:
         if a['actor'] == actor_name:
             continue
         else:
-            writeFormatted(f, [a['actor'], str(a['age'])], 4)
+            writeFormatted(f, [a['actor'], str(dude['year']), str(dude['age']), str(a['age'])], 4)
 
 def write(actors, actor_name):
     path_init()
@@ -85,7 +85,31 @@ def write(actors, actor_name):
     act_file_nm = actor_name +  "_results.csv"
     with open(oos.path.join(save_path, act_file_nm), "a") as f:
 
-        # Loop over bad data first
+        # Good Data First!
+        if len(good_data) is 0:
+            writeFormatted(f, ['No Good Data', actor_name])
+        else:
+            writeFormatted(f, ['Good Data', actor_name])
+            writeFormatted(f, ['Movie'], 2)
+            single_movie_data = []
+            current_movie = good_data[0]['movie']
+            writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Year', 'Actor Age:', 'Actress Age:'], 2)
+            for g in good_data:
+                if g['movie'] != current_movie:
+                    #print("old m: " + current_movie + ", new m: " + g['movie'])
+                    #print("current g actor: " + g['actor'])
+                    current_movie = g['movie']
+                    movie_group(single_movie_data, actor_name, f)
+                    #write_break(f, 1)
+                    #writeFormatted(f, [])
+                    single_movie_data = []
+                    single_movie_data.append(g)
+                else:
+                    single_movie_data.append(g)
+                    #print(g)
+
+        # Loop over bad data
+        write_break(f, 3)
         if len(thrown_data) is 0:
             writeFormatted(f, ['No Bad Data', actor_name])
         else:
@@ -94,28 +118,4 @@ def write(actors, actor_name):
             for t in thrown_data:
                 writeFormatted(f, [t[0], t[1]], 2)
 
-        # Now for the good data!
-        if len(good_data) is 0:
-            write_break(f, 3)
-            writeFormatted(f, ['No Good Data', actor_name])
-        else:
-            write_break(f, 3)
-            writeFormatted(f, ['Good Data', actor_name])
-            writeFormatted(f, ['Movie'], 2)
-            single_movie_data = []
-            current_movie = good_data[0]['movie']
-            for g in good_data:
-                #writeFormatted(f, ['Nothing', 'Yet'], 2)
-                if g['movie'] != current_movie:
-                    #print("old m: " + current_movie + ", new m: " + g['movie'])
-                    #print("current g actor: " + g['actor'])
-                    current_movie = g['movie']
-                    movie_group(single_movie_data, actor_name, f)
-                    write_break(f, 1)
-                    #writeFormatted(f, [])
-                    single_movie_data = []
-                    single_movie_data.append(g)
-                else:
-                    single_movie_data.append(g)
-                    #print(g)
 
