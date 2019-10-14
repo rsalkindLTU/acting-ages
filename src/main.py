@@ -10,7 +10,10 @@ def related_movies(raw_html):
     html = sc.BeautifulSoup(raw_html, 'html.parser')
 
     # Find all the div's with an id with the pattern 'actor-tt******' where the *'s are random numbers that we dont care about
-    movie_soup = html.findAll('div', {'id': re.compile('actor-tt.')})
+    if sc.target_gender.gender == 'm':
+        movie_soup = html.findAll('div', {'id': re.compile('actor-tt.')})
+    elif sc.target_gender.gender == 'f':
+        movie_soup = html.findAll('div', {'id': re.compile('actress-tt.')})
     #movie_soup = html.find('div', {'class': 'filmo-category-section'}).findAll('div', recursive=False)
 
     # Pre defined dictionarys
@@ -61,17 +64,25 @@ if __name__ == '__main__':
            #'/name/nm0000123/', # George Clooney
            #'/name/nm0000125/', # Sean Connery
            #'/name/nm0000354/', # Matt Damon
-           #'/name/nm0000148/', # Harrison Ford
-           #'/name/nm0000243/', # Denzel Washington
+           '/name/nm0000148/', # Harrison Ford
+           #'/name/nm0000243/'] # Denzel Washington
            #'/name/nm0185819/', # Daniel Craig
-           #'/name/nm0000147/', # Colin Firth
+           #'/name/nm0000147/'] # Colin Firth
            #'/name/nm0000375/', # Robert Downey Jr.
            #'/name/nm0000102/', # Kevin Bacon
-           #'/name/nm0000136/', # Johnny Depp
+           #'/name/nm0000136/'] # Johnny Depp
            #'/name/nm0000152/', # Richard Gere
-           '/name/nm0001557/', # Viggo Mortesen
-           '/name/nm0000093/', # Brad Pitt
-           '/name/nm0000115/'] # Nicolas Cage
+           #'/name/nm0001557/'] # Viggo Mortesen
+           #'/name/nm0000093/', # Brad Pitt
+           #'/name/nm0000115/', # Nicolas Cage
+           #'/name/nm0000018/', # Kirk Douglas
+           #'/name/nm0000142/', # Clint Eastwood
+           #'/name/nm0000886/'] # Warren Beaty
+            # Robert Redford? For comedy?
+           ]
+
+    # Update target gender
+    sc.target_gender = sc.TargetGender('m')
 
     for a in act:
         raw_html = sc.simple_get(glob_url + a)
@@ -81,11 +92,19 @@ if __name__ == '__main__':
         print(str(len(final)) + ' items')
 
         print("Working on actor: " + actor_name)
-        sc.scrape_movies(final, actor_name)
+        sc.scrape_movies(final, (actor_name, 'm'))
 
-    #for e in final:
-        #print('{0:60} | {1:20} | {2}'.format(e['Name'], e['URL'], e['Year']))
-    #print(str(len(final)) + ' items')
+    fact = [ #'/name/nm0000098/' # Jennifer Aniston
+             '/name/nm0000402/' # Carrie Fisher
+             '/name/nm0000235/' # Uma Thurman
+            ]
 
-    # Time to scrape!
-    #sc.scrape_movies(final, actor_name)
+    sc.target_gender = sc.TargetGender('f')
+    for f in fact:
+        raw_html = sc.simple_get(glob_url + f)
+        actor_name = get_actor_name(raw_html)
+        final = trim_movie_list(related_movies(raw_html))
+        print(str(len(final)) + ' items')
+        print("Working on actress: {}".format(actor_name))
+        sc.scrape_movies(final, (actor_name, 'f'))
+

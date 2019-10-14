@@ -2,10 +2,12 @@
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
+from ratelimit import limits, sleep_and_retry
 
 # For url parsing and scraping
 from bs4 import BeautifulSoup
 import re
+import sys
 
 # Workers and multiprocessing
 import multiprocessing as mp
@@ -15,8 +17,22 @@ from contextlib import contextmanager
 # Output handeling file
 import writer as out
 
-glob_url = 'https://imdb.com/'
 
+glob_url = 'https://imdb.com/'
+ignore_profit = False
+class TargetGender:
+    def __init__(self, let):
+        self.gender = let
+    def opposite_gender(self):
+        if self.gender == 'm':
+            return 'f'
+        else:
+            return 'm'
+
+target_gender = None
+
+@sleep_and_retry
+@limits(calls = 4, period=10)
 def simple_get(url):
     # Gets info at a url
     try:
@@ -27,6 +43,7 @@ def simple_get(url):
                 return None
     except RequestException as e:
         log_error('Error during requests to {0} : {1}'.format(url, str(e)))
+        sys.exit()
         return None
 
 def is_good_response(resp):
@@ -49,6 +66,8 @@ def manip_movie(url, actor):
     # If the movie does not meet those requirements, return none
     html = simple_get(url[0])
     soup = BeautifulSoup(html, 'html.parser')
+    actor, gender = actor
+    target_gender = TargetGender(gender)
 
     # 1:
     lead_list = []
@@ -59,7 +78,7 @@ def manip_movie(url, actor):
 
     actor_is_lead = False
     #for x in range(len(leads)):
-    acts_to_grab = 10
+    acts_to_grab = 15
     for x in range(acts_to_grab):
         #print(leads[x].td.a.img['alt'])
         try:
@@ -80,7 +99,8 @@ def manip_movie(url, actor):
                           'age_at_release':None,
                           'movie_year_released':-1,
                           'gpr_hit':False,
-                          'net_hit':False})
+                          'net_hit':False,
+                          'bad_box':False})
 
 
     if actor_is_lead == False: # If the actor we are looking at is not top billed
@@ -101,13 +121,16 @@ def manip_movie(url, actor):
         # Check if any of the leads are female. Otherwise, return None
         act_html = simple_get(glob_url + l['lead_url'])
         act_soup = BeautifulSoup(act_html, 'html.parser')
-        act_gender = act_soup.find('a', {'href':'#actor'})
-
-                # Skip dudes
-        if act_gender is not None:
-            l['gender'] = 'm'
+        if target_gender.gender == 'm':
+            act_gender = act_soup.find('a', {'href':'#actor'}) # If the actor tag is not present, then they are an actress.
         else:
-            l['gender'] = 'f'
+            act_gender = act_soup.find('a', {'href':'#actress'}) # If the actor tag is not present, then they are an actress.
+
+        # Skip dudes
+        if act_gender is not None:
+            l['gender'] = target_gender.gender
+        else:
+            l['gender'] = target_gender.opposite_gender()
 
         # get the actor's age during the filiming
 
@@ -117,18 +140,18 @@ def manip_movie(url, actor):
             l['age_at_release'] = actor_age_at_release
         except AttributeError:
             print("==> Attribute Error with information from the movie: '" + str(url[1]) + "' with actor " + l['lead'])
-            print("==> This actor has been thrown out of the dataset (scrape.py, 110)")
+            print("==> This actor has been thrown out of the dataset (scrape.py, 121)")
             # Do not add this actors age to the list, becuase IMDB does not have their age listed.
         except IndexError:
             print("==> Index Error with information from the movie: '" + str(url[1]) + "' with actor " + l['lead'])
-            print("==> This actor has been thrown out of the dataset (scrape.py, 114)")
+            print("==> This actor has been thrown out of the dataset (scrape.py, 125)")
             # Do not add this actors age to the list, becuase IMDB does not have their age listed.
 
 
 
     # Trim the list (again) to remove any other male stars:
     for x in range(len(lead_list)):
-        if lead_list[x]['gender'] == 'm' and lead_list[x]['lead'] != actor:
+        if lead_list[x]['gender'] == target_gender.gender and lead_list[x]['lead'] != actor:
             lead_list[x] = None # Nullify the actor, so they will be filtered out later.
 
     #return True
@@ -202,12 +225,10 @@ def greatist_hits(leads, soup):
 
 
     try: # TODO: make this not so much garbage (probably a regex replace or something)
-        #gross = int(gross_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
-        #budget = int(budget_str.replace(',','').replace('$','').replace('£','').replace('€', ''))
-        #gross = int(re.sub(r'[^0-9]+', '', gross_str))
-        #budget = int(re.sub(r'[^0-9]+', '', budget_str))
-        gross = float(re.sub(r'[^A-Za-z0-9_\.]', '', gross_str)) # Redone, as the previous regex was removing decimal places.
-        budget = float(re.sub(r'[^A-Za-z0-9_\.]', '', budget_str))
+        gross = int(re.sub(r'[^0-9]', '', gross_str))
+        budget = int(re.sub(r'[^0-9]', '', budget_str))
+        #gross = float(re.sub(r'[^A-Za-z0-9_\.]', '', gross_str)) # Redone, as the previous regex was removing decimal places.
+        #budget = float(re.sub(r'[^A-Za-z0-9_\.]', '', budget_str))
         #print("Gross: " + str(gross) + ", Budget: " + str(budget) + ", for movie " + movie_title)
     except AttributeError:
         print("====> Movie '" + movie_title + "' has either no gross or budget")
@@ -228,8 +249,13 @@ def greatist_hits(leads, soup):
     # We can either return the entire gpr and net values or we can return true/false if they pass a threshold.
     for l in leads:
         try:
-            if gpr > .50:
-                l['grp_hit'] = True
+            if ignore_profit is True:
+                #l['grp_hit'] = True
+                l['gpr_hit'], l['net_hit'] = True, True
+                #l['net_hit'] = True
+                continue
+            if gpr > 0.5:
+                l['gpr_hit'] = True
             if net_profit > (budget / 2):
             #if net_profit > 10000000:
                 l['net_hit'] = True

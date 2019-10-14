@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 *.swp
 out/
+*.7z
+*.pptx
+logs.py

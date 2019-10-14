@@ -4,11 +4,8 @@ This is project code for scraping the web. Never done that, nor have I used pyth
 ### Dependencies
 Right now, it is only a few libraries, namely: 
   
-  Beautiful Soup 4
-  
-    pip install beautifulsoup4
-  and Requests
-  
-    pip install requests
-    
+    pip install bs4 requests ratelimit
+  Depends on BeautifulSoup4, requests, and ratelimit
+
+
 That's all the outside dependencies!

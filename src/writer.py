@@ -61,13 +61,15 @@ def write(actors, actor_name):
     # First order of buisness: Filter the list (again) into two seperate lists
     # One of the thrown out movies
     # The other of all good information
+    actor_name, _ = actor_name
 
     thrown_data = []
     good_data = []
     for a in actors:
+        #print(a)
         if type(a) is str:
             thrown_data.append((a, 'doA'))
-        elif a['gpr_hit'] is False and a['net_hit'] is False:
+        elif a['gpr_hit'] == False and a['net_hit'] == False:
             thrown_data.append((a['movie'], 'not_hit'))
         else:
             filtered_data = {'actor':a['lead'], 'movie':a['movie'], 'age':a['age_at_release'], 'year':a['movie_year_released']}
@@ -93,7 +95,7 @@ def write(actors, actor_name):
             writeFormatted(f, ['Movie'], 2)
             single_movie_data = []
             current_movie = good_data[0]['movie']
-            writeFormatted(f, ['Movie:', 'Actor:', 'Actress:', 'Year', 'Actor Age:', 'Actress Age:'], 2)
+            writeFormatted(f, ['Movie', 'Actor', 'Actress', 'Year', 'Actor Age', 'Actress Age'], 2)
             for g in good_data:
                 if g['movie'] != current_movie:
                     #print("old m: " + current_movie + ", new m: " + g['movie'])
